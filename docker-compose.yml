@@ -1,0 +1,48 @@
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: product_mssql
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${MSSQL_SA_PASSWORD}", "-C", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: product_redis
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: .
+      dockerfile: src/ProductApi/Dockerfile
+    container_name: product_api
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Docker"
+      # URLs dentro do container (kestrel)
+      ASPNETCORE_URLS: "http://+:8080"
+      # Jwt (use variáveis de ambiente no container)
+      Jwt__Key: "uma-chave-secreta-bem-grande-aqui"
+      Jwt__Issuer: "ProdutosApi"
+      Jwt__Audience: "ProdutosApiUsers"
+      Jwt__AccessTokenMinutes: "15"
+      Jwt__RefreshTokenDays: "7"
+      # Connection Strings para serviços nomeados no compose
+      ConnectionStrings__DefaultConnection: "Server=mssql,1433;Database=ProductDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
+      ConnectionStrings__RedisConnection: "redis:6379"
+    depends_on:
+      mssql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "5000:8080"
+    # reinicia se cair
+    restart: unless-stopped

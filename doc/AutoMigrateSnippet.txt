@@ -1,0 +1,6 @@
+// Program.cs - aplicar migrations automaticamente no startup (opcional, útil em container)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ProductInfrastructure.Data.AppDbContext>();
+    db.Database.Migrate();
+}

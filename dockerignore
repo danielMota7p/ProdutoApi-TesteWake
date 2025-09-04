@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.idea/
+**/.vscode/
+**/*.user
+**/*.suo
+**/*.swp
+**/.DS_Store
+**/TestResults/
+**/artifacts/
+**/node_modules/
+.env
+secrets.*
+*/Migrations/*
